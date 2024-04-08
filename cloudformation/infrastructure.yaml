@@ -1,38 +1,55 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: AWS CloudFormation Template for GoLang Lambda Function
+
 Resources:
   GoLangLambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-      Path: "/"
-      Policies:
-      - PolicyName: GoLangLambdaExecutionPolicy
-        PolicyDocument:
-          Version: 2012-10-17
-          Statement:
           - Effect: Allow
-            Action:
-            - logs:CreateLogGroup
-            - logs:CreateLogStream
-            - logs:PutLogEvents
-            Resource: arn:aws:logs:*:*:*
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: GoLangLambdaExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: 'arn:aws:logs:*:*:*'
 
-  KubeCloudsIncLambdaFunction:  # Updated resource name
+  KubeCloudsIncLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: kubecloudsinc  # Explicitly naming the Lambda function
-      Handler: main
-      Role: !GetAtt GoLangLambdaExecutionRole.Arn
-      Runtime: go1.x
+      FunctionName: 'kubecloudsinc'
+      Handler: 'main'
+      Role: 
+        Fn::GetAtt: 
+          - "GoLangLambdaExecutionRole"
+          - "Arn"
+      Runtime: 'go1.x'
       Code:
-        S3Bucket: YOUR_S3_BUCKET_NAME_HERE  # Ensure to replace with your actual S3 bucket name
-        S3Key: main.zip  # And the key for your zipped GoLang binary
+        ZipFile: |
+          package main
+
+          import (
+            "context"
+            "fmt"
+            "github.com/aws/aws-lambda-go/lambda"
+          )
+
+          func HandleRequest(ctx context.Context) (string, error) {
+            return fmt.Sprintf("Hello, world!"), nil
+          }
+
+          func main() {
+            lambda.Start(HandleRequest)
+          }
       Timeout: 15
       MemorySize: 128
